@@ -3,35 +3,61 @@
 import { useState, useEffect } from 'react'
 import { useStore } from '@/lib/store'
 import { Sidebar } from '@/components/sidebar'
-import { KanbanBoard } from '@/components/kanban-board'
-import { CalendarView } from '@/components/calendar-view'
-import { NotesView } from '@/components/notes-view'
-import { PasswordsView } from '@/components/passwords-view'
 import { AuthForm } from '@/components/auth-form'
+import { IframeView } from '@/components/iframe-view'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { LayoutGrid, Calendar, FileText, Lock, FolderOpen } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+
+// URLs des 4 forks déployés
+const TOOL_URLS = {
+  tasks: 'https://folly-os-plane.vercel.app',
+  calendar: 'https://folly-os-calendar.vercel.app',
+  notes: 'https://folly-os-notes.vercel.app',
+  passwords: 'https://folly-os-vault.vercel.app',
+}
 
 export default function Dashboard() {
   const { selectedProjectId, projects } = useStore()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [user, setUser] = useState<any>(null)
+  const supabase = createClient()
 
   useEffect(() => {
     // Check if user is already authenticated
-    const user = localStorage.getItem('folly-os-user')
-    if (user) {
-      setIsAuthenticated(true)
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        setUser(user)
+        setIsAuthenticated(true)
+      }
+      setIsLoading(false)
     }
-    setIsLoading(false)
+    checkAuth()
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUser(session.user)
+        setIsAuthenticated(true)
+      } else {
+        setUser(null)
+        setIsAuthenticated(false)
+      }
+    })
+
+    return () => subscription.unsubscribe()
   }, [])
 
-  const handleAuth = (email: string) => {
+  const handleAuth = () => {
     setIsAuthenticated(true)
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem('folly-os-user')
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
     setIsAuthenticated(false)
+    setUser(null)
   }
 
   if (isLoading) {
@@ -50,7 +76,7 @@ export default function Dashboard() {
 
   return (
     <div className="flex h-screen bg-[#0F1115]">
-      <Sidebar />
+      <Sidebar onLogout={handleLogout} userEmail={user?.email} />
       
       <main className="flex-1 flex flex-col overflow-hidden">
         {selectedProject ? (
@@ -105,16 +131,28 @@ export default function Dashboard() {
 
                 <div className="flex-1 mt-4 overflow-hidden">
                   <TabsContent value="tasks" className="h-full mt-0">
-                    <KanbanBoard projectId={selectedProject.id} />
+                    <IframeView 
+                      src={TOOL_URLS.tasks} 
+                      title="Plane - Gestion des tâches" 
+                    />
                   </TabsContent>
                   <TabsContent value="calendar" className="h-full mt-0">
-                    <CalendarView projectId={selectedProject.id} />
+                    <IframeView 
+                      src={TOOL_URLS.calendar} 
+                      title="Someday - Calendrier" 
+                    />
                   </TabsContent>
                   <TabsContent value="notes" className="h-full mt-0">
-                    <NotesView projectId={selectedProject.id} />
+                    <IframeView 
+                      src={TOOL_URLS.notes} 
+                      title="Docmost - Notes" 
+                    />
                   </TabsContent>
                   <TabsContent value="passwords" className="h-full mt-0">
-                    <PasswordsView projectId={selectedProject.id} />
+                    <IframeView 
+                      src={TOOL_URLS.passwords} 
+                      title="Padloc - Mots de passe" 
+                    />
                   </TabsContent>
                 </div>
               </Tabs>

@@ -1,92 +1,130 @@
 'use client'
 
 import { useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Loader2 } from 'lucide-react'
 
 interface AuthFormProps {
-  onAuth: (email: string) => void
+  onAuth: () => void
 }
 
 export function AuthForm({ onAuth }: AuthFormProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [isLogin, setIsLogin] = useState(true)
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [isSignUp, setIsSignUp] = useState(false)
+  const [message, setMessage] = useState('')
+  const supabase = createClient()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    setError('')
+    setMessage('')
 
-    // Simulate auth - in production, use Supabase auth
-    setTimeout(() => {
-      setIsLoading(false)
-      if (email && password) {
-        localStorage.setItem('folly-os-user', email)
-        onAuth(email)
+    try {
+      if (isSignUp) {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
+          },
+        })
+        if (error) throw error
+        setMessage('Vérifiez votre email pour confirmer votre inscription.')
       } else {
-        setError('Veuillez remplir tous les champs')
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        })
+        if (error) throw error
+        onAuth()
       }
-    }, 1000)
+    } catch (error: any) {
+      setMessage(error.message || 'Une erreur est survenue')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0F1115] p-4">
+    <div className="min-h-screen bg-[#0F1115] flex items-center justify-center p-4">
       <Card className="w-full max-w-md bg-[#161922] border-[#2A2D37]">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-white">Folly OS</CardTitle>
+        <CardHeader className="text-center">
+          <div className="w-12 h-12 bg-[#5E6AD2] rounded-xl flex items-center justify-center mx-auto mb-4">
+            <span className="text-white font-bold text-xl">F</span>
+          </div>
+          <CardTitle className="text-2xl text-white">
+            {isSignUp ? 'Créer un compte' : 'Bienvenue sur Folly OS'}
+          </CardTitle>
           <CardDescription className="text-[#8A8F98]">
-            {isLogin ? 'Connectez-vous à votre compte' : 'Créez un nouveau compte'}
+            {isSignUp 
+              ? 'Créez votre compte pour accéder au dashboard' 
+              : 'Connectez-vous pour accéder à vos projets'}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-[#F7F8F8]">Email</Label>
+              <Label htmlFor="email" className="text-[#8A8F98]">Email</Label>
               <Input
                 id="email"
                 type="email"
                 placeholder="vous@exemple.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="bg-[#0F1115] border-[#2A2D37] text-white placeholder:text-[#8A8F98]"
                 required
+                className="bg-[#0F1115] border-[#2A2D37] text-white placeholder:text-[#5A5F6A] focus:border-[#5E6AD2] focus:ring-[#5E6AD2]"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-[#F7F8F8]">Mot de passe</Label>
+              <Label htmlFor="password" className="text-[#8A8F98]">Mot de passe</Label>
               <Input
                 id="password"
                 type="password"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="bg-[#0F1115] border-[#2A2D37] text-white placeholder:text-[#8A8F98]"
                 required
+                className="bg-[#0F1115] border-[#2A2D37] text-white placeholder:text-[#5A5F6A] focus:border-[#5E6AD2] focus:ring-[#5E6AD2]"
               />
             </div>
-            {error && (
-              <p className="text-sm text-red-500">{error}</p>
+            
+            {message && (
+              <div className={`text-sm ${message.includes('erreur') || message.includes('Error') ? 'text-red-400' : 'text-green-400'}`}>
+                {message}
+              </div>
             )}
+
             <Button
               type="submit"
-              className="w-full bg-[#5E6AD2] hover:bg-[#4F5BC7] text-white"
               disabled={isLoading}
+              className="w-full bg-[#5E6AD2] hover:bg-[#4F58B3] text-white"
             >
-              {isLoading ? 'Chargement...' : isLogin ? 'Se connecter' : 'S\'inscrire'}
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Chargement...
+                </>
+              ) : (
+                isSignUp ? 'Créer un compte' : 'Se connecter'
+              )}
             </Button>
           </form>
+
           <div className="mt-4 text-center">
             <button
               type="button"
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-sm text-[#8A8F98] hover:text-[#5E6AD2] transition-colors"
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="text-sm text-[#5E6AD2] hover:text-[#4F58B3]"
             >
-              {isLogin ? 'Pas de compte ? S\'inscrire' : 'Déjà un compte ? Se connecter'}
+              {isSignUp 
+                ? 'Déjà un compte ? Se connecter' 
+                : 'Pas de compte ? S\'inscrire'}
             </button>
           </div>
         </CardContent>

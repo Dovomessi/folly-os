@@ -7,10 +7,15 @@ import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { PROJECT_COLORS, generateId } from '@/lib/utils'
-import { Plus, Folder, MoreVertical, Trash2, Edit2 } from 'lucide-react'
+import { Plus, Folder, MoreVertical, Trash2, Edit2, LogOut } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 
-export function Sidebar() {
+interface SidebarProps {
+  onLogout?: () => void
+  userEmail?: string
+}
+
+export function Sidebar({ onLogout, userEmail }: SidebarProps) {
   const { projects, selectedProjectId, selectProject, addProject, updateProject, deleteProject } = useStore()
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
@@ -153,15 +158,32 @@ export function Sidebar() {
 
       {/* Footer */}
       <div className="p-4 border-t border-[#1F232E]">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 mb-3">
           <div className="w-8 h-8 rounded-full bg-[#5E6AD2] flex items-center justify-center">
-            <span className="text-white text-xs font-medium">FG</span>
+            <span className="text-white text-xs font-medium">
+              {userEmail ? userEmail.substring(0, 2).toUpperCase() : 'FG'}
+            </span>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm text-white truncate">Folly Germain</p>
-            <p className="text-xs text-[#8A8F98] truncate">Admin</p>
+            <p className="text-sm text-white truncate">
+              {userEmail ? userEmail.split('@')[0] : 'Folly Germain'}
+            </p>
+            <p className="text-xs text-[#8A8F98] truncate">
+              {userEmail || 'Admin'}
+            </p>
           </div>
         </div>
+        {onLogout && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onLogout}
+            className="w-full border-[#2A2D37] text-[#8A8F98] hover:bg-[#1F232E] hover:text-white"
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Déconnexion
+          </Button>
+        )}
       </div>
 
       {/* Create Project Dialog */}
