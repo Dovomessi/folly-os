@@ -1,65 +1,123 @@
-import Image from "next/image";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main className="min-h-screen bg-slate-50 dark:bg-slate-950">
+      {/* Header */}
+      <header className="border-b bg-white dark:bg-slate-900 px-6 py-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Folly OS</h1>
+            <p className="text-sm text-slate-500">Dashboard personnel unifié</p>
+          </div>
+          <Badge variant="outline" className="text-xs">v0.1.0</Badge>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      </header>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto p-6">
+        <Tabs defaultValue="projects" className="w-full">
+          <TabsList className="grid w-full grid-cols-4 lg:w-[600px]">
+            <TabsTrigger value="projects">Projets</TabsTrigger>
+            <TabsTrigger value="calendar">RDV & Agenda</TabsTrigger>
+            <TabsTrigger value="notes">Notes</TabsTrigger>
+            <TabsTrigger value="passwords">Passwords</TabsTrigger>
+          </TabsList>
+
+          <Separator className="my-4" />
+
+          {/* Projects Tab - Plane Integration */}
+          <TabsContent value="projects">
+            <Card>
+              <CardHeader>
+                <CardTitle>Gestion des Projets</CardTitle>
+                <CardDescription>
+                  Intégration Plane - Tâches, Kanban, Suivi de projet
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="aspect-video bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center">
+                  <div className="text-center">
+                    <p className="text-slate-500 mb-2">Plane Integration</p>
+                    <p className="text-sm text-slate-400">
+                      Configuration requise : URL Plane + API Key
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Calendar Tab - Someday Integration */}
+          <TabsContent value="calendar">
+            <Card>
+              <CardHeader>
+                <CardTitle>Rendez-vous & Agenda</CardTitle>
+                <CardDescription>
+                  Intégration Someday - Booking de créneaux, Calendly-like
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="aspect-video bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center">
+                  <div className="text-center">
+                    <p className="text-slate-500 mb-2">Someday Integration</p>
+                    <p className="text-sm text-slate-400">
+                      Configuration requise : URL Someday + API Key
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Notes Tab - Docmost Integration */}
+          <TabsContent value="notes">
+            <Card>
+              <CardHeader>
+                <CardTitle>Notes & Wiki</CardTitle>
+                <CardDescription>
+                  Intégration Docmost - Documentation, Notes collaboratives
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="aspect-video bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center">
+                  <div className="text-center">
+                    <p className="text-slate-500 mb-2">Docmost Integration</p>
+                    <p className="text-sm text-slate-400">
+                      Configuration requise : URL Docmost + API Key
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Passwords Tab - Padloc Integration */}
+          <TabsContent value="passwords">
+            <Card>
+              <CardHeader>
+                <CardTitle>Gestionnaire de Mots de Passe</CardTitle>
+                <CardDescription>
+                  Intégration Padloc - Vault chiffré, style 1Password
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="aspect-video bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center">
+                  <div className="text-center">
+                    <p className="text-slate-500 mb-2">Padloc Integration</p>
+                    <p className="text-sm text-slate-400">
+                      Configuration requise : Instance Padloc + Clé maître
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </main>
   );
 }
