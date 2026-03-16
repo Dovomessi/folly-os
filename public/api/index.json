@@ -1,0 +1,203 @@
+{
+  "name": "Folly OS API",
+  "version": "0.1.0",
+  "description": "API documentation for Folly OS - Linear-style productivity dashboard",
+  "baseUrl": "https://folly-os.vercel.app",
+  "authentication": {
+    "type": "Client-side storage (Zustand + localStorage)",
+    "note": "Currently using client-side storage. Supabase integration ready for backend persistence."
+  },
+  "endpoints": {
+    "projects": {
+      "description": "Project management",
+      "methods": {
+        "GET": {
+          "description": "List all projects",
+          "response": {
+            "id": "string",
+            "name": "string",
+            "description": "string | null",
+            "color": "string",
+            "created_at": "ISO datetime",
+            "updated_at": "ISO datetime"
+          }
+        },
+        "POST": {
+          "description": "Create a new project",
+          "body": {
+            "name": "string (required)",
+            "description": "string (optional)",
+            "color": "string (optional, default: #5E6AD2)"
+          }
+        }
+      }
+    },
+    "tasks": {
+      "description": "Task management with Kanban board",
+      "methods": {
+        "GET": {
+          "description": "List all tasks (optionally filter by projectId)",
+          "query": {
+            "projectId": "string (optional)"
+          },
+          "response": {
+            "id": "string",
+            "title": "string",
+            "description": "string | null",
+            "status": "'todo' | 'in_progress' | 'done'",
+            "priority": "'low' | 'medium' | 'high'",
+            "project_id": "string",
+            "created_at": "ISO datetime",
+            "updated_at": "ISO datetime"
+          }
+        },
+        "POST": {
+          "description": "Create a new task",
+          "body": {
+            "title": "string (required)",
+            "description": "string (optional)",
+            "status": "'todo' | 'in_progress' | 'done' (default: 'todo')",
+            "priority": "'low' | 'medium' | 'high' (default: 'medium')",
+            "project_id": "string (required)"
+          }
+        }
+      }
+    },
+    "appointments": {
+      "description": "Calendar appointments",
+      "methods": {
+        "GET": {
+          "description": "List appointments for a project",
+          "query": {
+            "projectId": "string (required)"
+          }
+        },
+        "POST": {
+          "description": "Create a new appointment",
+          "body": {
+            "title": "string (required)",
+            "description": "string (optional)",
+            "start_time": "ISO datetime (required)",
+            "end_time": "ISO datetime (required)",
+            "project_id": "string (required)"
+          }
+        }
+      }
+    },
+    "notes": {
+      "description": "Notes management",
+      "methods": {
+        "GET": {
+          "description": "List notes for a project",
+          "query": {
+            "projectId": "string (required)"
+          }
+        },
+        "POST": {
+          "description": "Create a new note",
+          "body": {
+            "title": "string (required)",
+            "content": "string (optional)",
+            "project_id": "string (required)"
+          }
+        }
+      }
+    },
+    "passwords": {
+      "description": "Password vault",
+      "methods": {
+        "GET": {
+          "description": "List passwords for a project",
+          "query": {
+            "projectId": "string (required)"
+          }
+        },
+        "POST": {
+          "description": "Create a new password entry",
+          "body": {
+            "name": "string (required)",
+            "username": "string (required)",
+            "password": "string (required)",
+            "url": "string (optional)",
+            "notes": "string (optional)",
+            "project_id": "string (required)"
+          }
+        }
+      }
+    }
+  },
+  "integrationGuide": {
+    "supabase": {
+      "description": "To enable backend persistence with Supabase:",
+      "steps": [
+        "1. Install @supabase/supabase-js: npm install @supabase/supabase-js",
+        "2. Uncomment the supabase client in src/lib/supabase.ts",
+        "3. Create the database tables using the schema in supabase/schema.sql",
+        "4. Update the store to use Supabase instead of localStorage",
+        "5. Deploy API routes for external agent access"
+      ]
+    },
+    "externalAgents": {
+      "description": "For external agents to interact with Folly OS:",
+      "options": [
+        "Option 1: Use the Supabase REST API directly with the service role key",
+        "Option 2: Deploy serverless functions (Vercel Functions, Netlify Functions)",
+        "Option 3: Use the client-side API via browser automation"
+      ]
+    }
+  },
+  "databaseSchema": {
+    "projects": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "name": "text NOT NULL",
+      "description": "text",
+      "color": "text DEFAULT '#5E6AD2'",
+      "created_at": "timestamptz DEFAULT now()",
+      "updated_at": "timestamptz DEFAULT now()",
+      "user_id": "uuid REFERENCES auth.users"
+    },
+    "tasks": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "title": "text NOT NULL",
+      "description": "text",
+      "status": "text DEFAULT 'todo' CHECK (status IN ('todo', 'in_progress', 'done'))",
+      "priority": "text DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high'))",
+      "project_id": "uuid REFERENCES projects(id) ON DELETE CASCADE",
+      "created_at": "timestamptz DEFAULT now()",
+      "updated_at": "timestamptz DEFAULT now()",
+      "user_id": "uuid REFERENCES auth.users"
+    },
+    "appointments": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "title": "text NOT NULL",
+      "description": "text",
+      "start_time": "timestamptz NOT NULL",
+      "end_time": "timestamptz NOT NULL",
+      "project_id": "uuid REFERENCES projects(id) ON DELETE CASCADE",
+      "created_at": "timestamptz DEFAULT now()",
+      "updated_at": "timestamptz DEFAULT now()",
+      "user_id": "uuid REFERENCES auth.users"
+    },
+    "notes": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "title": "text NOT NULL",
+      "content": "text DEFAULT ''",
+      "project_id": "uuid REFERENCES projects(id) ON DELETE CASCADE",
+      "created_at": "timestamptz DEFAULT now()",
+      "updated_at": "timestamptz DEFAULT now()",
+      "user_id": "uuid REFERENCES auth.users"
+    },
+    "passwords": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "name": "text NOT NULL",
+      "username": "text NOT NULL",
+      "password": "text NOT NULL",
+      "url": "text",
+      "notes": "text",
+      "project_id": "uuid REFERENCES projects(id) ON DELETE CASCADE",
+      "created_at": "timestamptz DEFAULT now()",
+      "updated_at": "timestamptz DEFAULT now()",
+      "user_id": "uuid REFERENCES auth.users"
+    }
+  }
+}
