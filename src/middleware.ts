@@ -1,10 +1,10 @@
-import { type NextRequest } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 
 export async function middleware(request: NextRequest) {
   // Skip middleware during build
   if (process.env.NEXT_PHASE === 'phase-production-build') {
-    return Response.next()
+    return NextResponse.next()
   }
   
   return await updateSession(request)
