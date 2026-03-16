@@ -18,7 +18,6 @@ export function AuthForm({ onAuth }: AuthFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [isSignUp, setIsSignUp] = useState(false)
   const [message, setMessage] = useState('')
-  const supabase = createClient()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -26,6 +25,8 @@ export function AuthForm({ onAuth }: AuthFormProps) {
     setMessage('')
 
     try {
+      const supabase = createClient()
+      
       if (isSignUp) {
         const { error } = await supabase.auth.signUp({
           email,

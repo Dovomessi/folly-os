@@ -7,7 +7,6 @@ import { AuthForm } from '@/components/auth-form'
 import { IframeView } from '@/components/iframe-view'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { LayoutGrid, Calendar, FileText, Lock, FolderOpen } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 
 // URLs des 4 forks déployés
 const TOOL_URLS = {
@@ -17,17 +16,44 @@ const TOOL_URLS = {
   passwords: 'https://folly-os-vault.vercel.app',
 }
 
+// Supabase client creation with fallback for build time
+function createSupabaseClient() {
+  try {
+    const { createBrowserClient } = require('@supabase/ssr')
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    
+    if (!url || !key) {
+      console.warn('Supabase env vars not available')
+      return null
+    }
+    
+    return createBrowserClient(url, key)
+  } catch (e) {
+    console.warn('Failed to create Supabase client:', e)
+    return null
+  }
+}
+
 export default function Dashboard() {
   const { selectedProjectId, projects } = useStore()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
-  const supabase = createClient()
+  const [supabase, setSupabase] = useState<any>(null)
 
   useEffect(() => {
+    const client = createSupabaseClient()
+    setSupabase(client)
+
+    if (!client) {
+      setIsLoading(false)
+      return
+    }
+
     // Check if user is already authenticated
     const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { user } } = await client.auth.getUser()
       if (user) {
         setUser(user)
         setIsAuthenticated(true)
@@ -37,7 +63,7 @@ export default function Dashboard() {
     checkAuth()
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = client.auth.onAuthStateChange((_event: any, session: any) => {
       if (session?.user) {
         setUser(session.user)
         setIsAuthenticated(true)
@@ -55,7 +81,9 @@ export default function Dashboard() {
   }
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
+    if (supabase) {
+      await supabase.auth.signOut()
+    }
     setIsAuthenticated(false)
     setUser(null)
   }
