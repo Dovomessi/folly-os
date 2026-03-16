@@ -1,123 +1,139 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+'use client'
 
-export default function Home() {
-  return (
-    <main className="min-h-screen bg-slate-50 dark:bg-slate-950">
-      {/* Header */}
-      <header className="border-b bg-white dark:bg-slate-900 px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Folly OS</h1>
-            <p className="text-sm text-slate-500">Dashboard personnel unifié</p>
-          </div>
-          <Badge variant="outline" className="text-xs">v0.1.0</Badge>
-        </div>
-      </header>
+import { useState, useEffect } from 'react'
+import { useStore } from '@/lib/store'
+import { Sidebar } from '@/components/sidebar'
+import { KanbanBoard } from '@/components/kanban-board'
+import { CalendarView } from '@/components/calendar-view'
+import { NotesView } from '@/components/notes-view'
+import { PasswordsView } from '@/components/passwords-view'
+import { AuthForm } from '@/components/auth-form'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { LayoutGrid, Calendar, FileText, Lock, FolderOpen } from 'lucide-react'
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto p-6">
-        <Tabs defaultValue="projects" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 lg:w-[600px]">
-            <TabsTrigger value="projects">Projets</TabsTrigger>
-            <TabsTrigger value="calendar">RDV & Agenda</TabsTrigger>
-            <TabsTrigger value="notes">Notes</TabsTrigger>
-            <TabsTrigger value="passwords">Passwords</TabsTrigger>
-          </TabsList>
+export default function Dashboard() {
+  const { selectedProjectId, projects } = useStore()
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
-          <Separator className="my-4" />
+  useEffect(() => {
+    // Check if user is already authenticated
+    const user = localStorage.getItem('folly-os-user')
+    if (user) {
+      setIsAuthenticated(true)
+    }
+    setIsLoading(false)
+  }, [])
 
-          {/* Projects Tab - Plane Integration */}
-          <TabsContent value="projects">
-            <Card>
-              <CardHeader>
-                <CardTitle>Gestion des Projets</CardTitle>
-                <CardDescription>
-                  Intégration Plane - Tâches, Kanban, Suivi de projet
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="aspect-video bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center">
-                  <div className="text-center">
-                    <p className="text-slate-500 mb-2">Plane Integration</p>
-                    <p className="text-sm text-slate-400">
-                      Configuration requise : URL Plane + API Key
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+  const handleAuth = (email: string) => {
+    setIsAuthenticated(true)
+  }
 
-          {/* Calendar Tab - Someday Integration */}
-          <TabsContent value="calendar">
-            <Card>
-              <CardHeader>
-                <CardTitle>Rendez-vous & Agenda</CardTitle>
-                <CardDescription>
-                  Intégration Someday - Booking de créneaux, Calendly-like
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="aspect-video bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center">
-                  <div className="text-center">
-                    <p className="text-slate-500 mb-2">Someday Integration</p>
-                    <p className="text-sm text-slate-400">
-                      Configuration requise : URL Someday + API Key
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+  const handleLogout = () => {
+    localStorage.removeItem('folly-os-user')
+    setIsAuthenticated(false)
+  }
 
-          {/* Notes Tab - Docmost Integration */}
-          <TabsContent value="notes">
-            <Card>
-              <CardHeader>
-                <CardTitle>Notes & Wiki</CardTitle>
-                <CardDescription>
-                  Intégration Docmost - Documentation, Notes collaboratives
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="aspect-video bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center">
-                  <div className="text-center">
-                    <p className="text-slate-500 mb-2">Docmost Integration</p>
-                    <p className="text-sm text-slate-400">
-                      Configuration requise : URL Docmost + API Key
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Passwords Tab - Padloc Integration */}
-          <TabsContent value="passwords">
-            <Card>
-              <CardHeader>
-                <CardTitle>Gestionnaire de Mots de Passe</CardTitle>
-                <CardDescription>
-                  Intégration Padloc - Vault chiffré, style 1Password
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="aspect-video bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center">
-                  <div className="text-center">
-                    <p className="text-slate-500 mb-2">Padloc Integration</p>
-                    <p className="text-sm text-slate-400">
-                      Configuration requise : Instance Padloc + Clé maître
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#0F1115] flex items-center justify-center">
+        <div className="text-[#8A8F98]">Chargement...</div>
       </div>
-    </main>
-  );
+    )
+  }
+
+  if (!isAuthenticated) {
+    return <AuthForm onAuth={handleAuth} />
+  }
+
+  const selectedProject = projects.find((p) => p.id === selectedProjectId)
+
+  return (
+    <div className="flex h-screen bg-[#0F1115]">
+      <Sidebar />
+      
+      <main className="flex-1 flex flex-col overflow-hidden">
+        {selectedProject ? (
+          <>
+            {/* Project Header */}
+            <header className="px-6 py-4 border-b border-[#1F232E] bg-[#0F1115]">
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-4 h-4 rounded-full"
+                  style={{ backgroundColor: selectedProject.color }}
+                />
+                <h1 className="text-xl font-semibold text-white">{selectedProject.name}</h1>
+                {selectedProject.description && (
+                  <span className="text-[#8A8F98] text-sm">— {selectedProject.description}</span>
+                )}
+              </div>
+            </header>
+
+            {/* Tabs Content */}
+            <div className="flex-1 overflow-hidden p-6">
+              <Tabs defaultValue="tasks" className="h-full flex flex-col">
+                <TabsList className="bg-[#161922] border border-[#2A2D37] w-fit">
+                  <TabsTrigger
+                    value="tasks"
+                    className="data-[state=active]:bg-[#5E6AD2] data-[state=active]:text-white text-[#8A8F98]"
+                  >
+                    <LayoutGrid className="w-4 h-4 mr-2" />
+                    Tâches
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="calendar"
+                    className="data-[state=active]:bg-[#5E6AD2] data-[state=active]:text-white text-[#8A8F98]"
+                  >
+                    <Calendar className="w-4 h-4 mr-2" />
+                    Rendez-vous
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="notes"
+                    className="data-[state=active]:bg-[#5E6AD2] data-[state=active]:text-white text-[#8A8F98]"
+                  >
+                    <FileText className="w-4 h-4 mr-2" />
+                    Notes
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="passwords"
+                    className="data-[state=active]:bg-[#5E6AD2] data-[state=active]:text-white text-[#8A8F98]"
+                  >
+                    <Lock className="w-4 h-4 mr-2" />
+                    Passwords
+                  </TabsTrigger>
+                </TabsList>
+
+                <div className="flex-1 mt-4 overflow-hidden">
+                  <TabsContent value="tasks" className="h-full mt-0">
+                    <KanbanBoard projectId={selectedProject.id} />
+                  </TabsContent>
+                  <TabsContent value="calendar" className="h-full mt-0">
+                    <CalendarView projectId={selectedProject.id} />
+                  </TabsContent>
+                  <TabsContent value="notes" className="h-full mt-0">
+                    <NotesView projectId={selectedProject.id} />
+                  </TabsContent>
+                  <TabsContent value="passwords" className="h-full mt-0">
+                    <PasswordsView projectId={selectedProject.id} />
+                  </TabsContent>
+                </div>
+              </Tabs>
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <FolderOpen className="w-16 h-16 text-[#2A2D37] mx-auto mb-4" />
+              <h2 className="text-xl font-semibold text-[#8A8F98] mb-2">
+                Aucun projet sélectionné
+              </h2>
+              <p className="text-[#8A8F98]">
+                Créez un nouveau projet ou sélectionnez-en un dans la sidebar
+              </p>
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
+  )
 }
