@@ -7,18 +7,17 @@ export async function GET(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { searchParams } = new URL(request.url)
-  const projectId = searchParams.get('project_id')
+  const taskId = searchParams.get('task_id')
 
-  if (!projectId) {
-    return NextResponse.json({ error: 'project_id is required' }, { status: 400 })
+  if (!taskId) {
+    return NextResponse.json({ error: 'task_id is required' }, { status: 400 })
   }
 
   const { data, error } = await supabase
-    .from('tasks')
+    .from('task_comments')
     .select('*')
-    .eq('project_id', projectId)
-    .eq('user_id', user.id)
-    .order('position', { ascending: true })
+    .eq('task_id', taskId)
+    .order('created_at', { ascending: true })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ data })
@@ -31,29 +30,11 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json()
 
-  // Get max position for the column
-  const { data: existing } = await supabase
-    .from('tasks')
-    .select('position')
-    .eq('project_id', body.project_id)
-    .eq('user_id', user.id)
-    .order('position', { ascending: false })
-    .limit(1)
-
-  const position = existing && existing.length > 0 ? existing[0].position + 1 : 0
-
   const { data, error } = await supabase
-    .from('tasks')
+    .from('task_comments')
     .insert({
-      title: body.title,
-      description: body.description || null,
-      status: body.status || 'todo',
-      priority: body.priority || 'medium',
-      position,
-      column_id: body.column_id || null,
-      due_date: body.due_date || null,
-      labels: body.labels || [],
-      project_id: body.project_id,
+      content: body.content,
+      task_id: body.task_id,
       user_id: user.id,
     })
     .select()
@@ -61,4 +42,24 @@ export async function POST(request: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ data }, { status: 201 })
+}
+
+export async function DELETE(request: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { searchParams } = new URL(request.url)
+  const id = searchParams.get('id')
+
+  if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 })
+
+  const { error } = await supabase
+    .from('task_comments')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', user.id)
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ success: true })
 }

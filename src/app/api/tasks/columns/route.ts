@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
+const DEFAULT_COLUMNS = [
+  { name: 'A faire', position: 0, status: 'todo' },
+  { name: 'En cours', position: 1, status: 'in_progress' },
+  { name: 'En revue', position: 2, status: 'in_review' },
+  { name: 'Termine', position: 3, status: 'done' },
+]
+
 export async function GET(request: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -13,14 +20,32 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'project_id is required' }, { status: 400 })
   }
 
-  const { data, error } = await supabase
-    .from('tasks')
+  let { data, error } = await supabase
+    .from('task_columns')
     .select('*')
     .eq('project_id', projectId)
     .eq('user_id', user.id)
     .order('position', { ascending: true })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Auto-create default columns if none exist
+  if (!data || data.length === 0) {
+    const toInsert = DEFAULT_COLUMNS.map(col => ({
+      ...col,
+      project_id: projectId,
+      user_id: user.id,
+    }))
+
+    const { data: created, error: createError } = await supabase
+      .from('task_columns')
+      .insert(toInsert)
+      .select()
+
+    if (createError) return NextResponse.json({ error: createError.message }, { status: 500 })
+    data = created
+  }
+
   return NextResponse.json({ data })
 }
 
@@ -31,31 +56,9 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json()
 
-  // Get max position for the column
-  const { data: existing } = await supabase
-    .from('tasks')
-    .select('position')
-    .eq('project_id', body.project_id)
-    .eq('user_id', user.id)
-    .order('position', { ascending: false })
-    .limit(1)
-
-  const position = existing && existing.length > 0 ? existing[0].position + 1 : 0
-
   const { data, error } = await supabase
-    .from('tasks')
-    .insert({
-      title: body.title,
-      description: body.description || null,
-      status: body.status || 'todo',
-      priority: body.priority || 'medium',
-      position,
-      column_id: body.column_id || null,
-      due_date: body.due_date || null,
-      labels: body.labels || [],
-      project_id: body.project_id,
-      user_id: user.id,
-    })
+    .from('task_columns')
+    .insert({ ...body, user_id: user.id })
     .select()
     .single()
 
