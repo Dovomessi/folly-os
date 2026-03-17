@@ -3,34 +3,29 @@
 import { useParams } from 'next/navigation'
 import { useStore } from '@/lib/store'
 import { ProjectHeader } from '@/components/layout/project-header'
-import { IframeToolbar } from '@/components/layout/iframe-toolbar'
-import { IframeView } from '@/components/iframe-view'
-import { Lock } from 'lucide-react'
+import { VaultList } from '@/components/vault/vault-list'
+import { FolderOpen } from 'lucide-react'
 
-export default function PasswordsPage() {
+export default function VaultPage() {
   const { id } = useParams<{ id: string }>()
   const rawProject = useStore(s => s.projects.find(p => p.id === id))
   const project = rawProject ? { ...rawProject, status: rawProject.status || ('active' as const) } : undefined
 
-  if (!project) return null
-
-  const vaultExternal = process.env.NEXT_PUBLIC_VAULTWARDEN_URL || 'https://vaultwarden-production-39da.up.railway.app'
+  if (!project) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <div className="text-center">
+          <FolderOpen className="w-16 h-16 text-[#2A2D37] mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-[#8A8F98]">Projet introuvable</h2>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <>
       <ProjectHeader project={project} />
-      <IframeToolbar
-        serviceName="Vaultwarden"
-        serviceIcon={<Lock className="w-3.5 h-3.5" />}
-        projectName={project.name}
-        externalUrl={vaultExternal}
-        actions={[
-          { label: '+ Ajouter', onClick: () => window.open(vaultExternal, '_blank') },
-        ]}
-      />
-      <div className="flex-1 overflow-hidden">
-        <IframeView src="/api/proxy/vault" title={`Vaultwarden - ${project.name}`} />
-      </div>
+      <VaultList projectId={id} />
     </>
   )
 }

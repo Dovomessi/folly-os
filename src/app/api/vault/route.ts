@@ -1,12 +1,76 @@
-import { NextResponse } from 'next/server'
-import { vaultwardenApi } from '@/lib/api/vaultwarden'
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
+import { encrypt, decrypt } from '@/lib/encryption'
 
-export async function GET() {
-  try {
-    const data = await vaultwardenApi.listUsers()
-    return NextResponse.json({ data })
-  } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : 'Unknown error'
-    return NextResponse.json({ error: message }, { status: 502 })
+export async function GET(request: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { searchParams } = new URL(request.url)
+  const projectId = searchParams.get('project_id')
+
+  if (!projectId) {
+    return NextResponse.json({ error: 'project_id is required' }, { status: 400 })
   }
+
+  const { data, error } = await supabase
+    .from('vault_items')
+    .select('*')
+    .eq('project_id', projectId)
+    .eq('user_id', user.id)
+    .order('name', { ascending: true })
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Decrypt passwords — never expose encrypted_password to client
+  const items = (data || []).map(item => {
+    const { encrypted_password, ...rest } = item
+    let password = ''
+    try {
+      password = decrypt(encrypted_password)
+    } catch {
+      password = ''
+    }
+    return { ...rest, password }
+  })
+
+  return NextResponse.json({ data: items })
+}
+
+export async function POST(request: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const body = await request.json()
+
+  if (!body.name?.trim()) {
+    return NextResponse.json({ error: 'name is required' }, { status: 400 })
+  }
+  if (!body.password) {
+    return NextResponse.json({ error: 'password is required' }, { status: 400 })
+  }
+
+  const encrypted_password = encrypt(body.password)
+
+  const { data, error } = await supabase
+    .from('vault_items')
+    .insert({
+      name: body.name.trim(),
+      url: body.url || null,
+      username: body.username || null,
+      encrypted_password,
+      notes: body.notes || null,
+      category: body.category || 'other',
+      project_id: body.project_id,
+      user_id: user.id,
+    })
+    .select()
+    .single()
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  const { encrypted_password: _ep, ...rest } = data
+  return NextResponse.json({ data: { ...rest, password: body.password } }, { status: 201 })
 }
