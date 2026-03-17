@@ -1,177 +1,147 @@
 # Folly OS
 
-Dashboard de productivité professionnel style Linear - Projets, Tâches, Rendez-vous, Notes, Passwords.
-
-![Folly OS](https://folly-os.vercel.app)
-
-## 🚀 Démo en ligne
+Dashboard de productivite unifie style Linear. Centralise 4 outils open-source (Plane, Cal.com, Docmost, Vaultwarden) dans une interface unique organisee par projets, avec API Gateway pour agents IA.
 
 **https://folly-os.vercel.app**
 
-## ✨ Fonctionnalités
-
-- **🔐 Authentification** - Login/signup avec email (localStorage pour l'instant)
-- **📁 Projets** - CRUD complet avec couleurs personnalisables
-- **📋 Tâches/Kanban** - Tableau type Trello avec colonnes À faire/En cours/Terminé
-- **📅 Rendez-vous** - Calendrier par projet avec gestion des créneaux
-- **📝 Notes** - Éditeur de notes simple par projet
-- **🔒 Passwords** - Vault de mots de passe avec génération et copie
-- **🎨 Design Linear** - Interface sombre, accents violets, animations fluides
-
-## 🛠 Stack technique
-
-- **Framework**: Next.js 14 (App Router)
-- **Langage**: TypeScript
-- **Styling**: Tailwind CSS 3.4
-- **UI Components**: shadcn/ui + Radix UI
-- **State Management**: Zustand + localStorage
-- **Icons**: Lucide React
-- **Déploiement**: Vercel
-
-## 🏗 Architecture
-
-### Entité centrale : Le Projet
+## Architecture
 
 ```
-Projet
-├── Tâches (Kanban)
-├── Rendez-vous (Calendrier)
-├── Notes (Éditeur)
-└── Passwords (Vault)
+Vercel (Dashboard Next.js + API Gateway)
+    |
+    +-- Supabase (Auth + projets + mappings)
+    |
+    +-- Oracle Cloud ARM (Coolify)
+        +-- Plane (taches) ........... plane.folly-os.dev
+        +-- Cal.com (calendrier) ..... cal.folly-os.dev
+        +-- Docmost (notes) .......... notes.folly-os.dev
+        +-- Vaultwarden (passwords) .. vault.folly-os.dev
+        +-- PostgreSQL 16 + Redis 8
 ```
 
-### Design System (Style Linear)
+## Stack technique
 
-| Token | Valeur | Usage |
-|-------|--------|-------|
-| `--background` | `#0F1115` | Fond principal |
-| `--card` | `#161922` | Cartes, panels |
-| `--popover` | `#1F232E` | Menus, dropdowns |
-| `--primary` | `#5E6AD2` | Accents, boutons |
-| `--border` | `#2A2D37` | Bordures |
-| `--text` | `#F7F8F8` | Texte principal |
-| `--text-secondary` | `#8A8F98` | Texte secondaire |
+| Couche | Techno |
+|--------|--------|
+| Dashboard | Next.js 14, React 18, TypeScript, Tailwind CSS 3.4, shadcn/ui |
+| State | Zustand |
+| Auth + DB | Supabase (Auth + PostgreSQL) |
+| Taches | [Plane](https://github.com/Dovomessi/folly-os-plane) (fork) |
+| Calendrier | [Cal.com](https://github.com/calcom/cal.com) (fork) |
+| Notes | [Docmost](https://github.com/Dovomessi/folly-os-notes) (fork) |
+| Passwords | [Vaultwarden](https://github.com/dani-garcia/vaultwarden) |
+| Infra | Oracle Cloud ARM (Coolify), Vercel |
 
-## 🚀 Démarrage
+## Fonctionnalites
 
-### Prérequis
+- **Auth Supabase** — Login/signup email, session persistante
+- **Projets** — CRUD avec couleurs, statut (actif/pause), description
+- **Vue d'ensemble** — Widgets resumes par projet (taches, RDV, notes, passwords)
+- **Taches** — Iframe Plane (kanban, liste, timeline) filtre par projet
+- **Calendrier** — Iframe Cal.com (scheduling, event types)
+- **Notes** — Iframe Docmost (wiki collaboratif, espaces par projet)
+- **Passwords** — Iframe Vaultwarden (coffre-fort compatible Bitwarden)
+- **API Gateway** — Proxy unifie pour agents IA (Claude, OpenClauw)
+- **Design Linear** — Interface sombre, accents violets, animations fluides
 
-- Node.js 18+
-- npm ou yarn
-
-### Installation
+## Demarrage
 
 ```bash
-# Cloner le repo
 git clone https://github.com/Dovomessi/folly-os.git
 cd folly-os
-
-# Installer les dépendances
 npm install
-
-# Lancer en développement
 npm run dev
-
-# Build pour production
-npm run build
 ```
 
-## 🔌 Intégration Supabase (Optionnel)
+## Variables d'environnement
 
-Pour activer la persistance backend :
+Creer `.env.local` :
 
-1. **Installer Supabase**
-   ```bash
-   npm install @supabase/supabase-js
-   ```
+```env
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
 
-2. **Créer les tables**
-   - Allez dans l'éditeur SQL de Supabase
-   - Copiez le contenu de `supabase/schema.sql`
-   - Exécutez le script
+# Services (URLs des instances self-hosted)
+NEXT_PUBLIC_PLANE_URL=https://plane.folly-os.dev
+NEXT_PUBLIC_CALCOM_URL=https://cal.folly-os.dev
+NEXT_PUBLIC_DOCMOST_URL=https://notes.folly-os.dev
+NEXT_PUBLIC_VAULTWARDEN_URL=https://vault.folly-os.dev
 
-3. **Configurer le client**
-   - Décommentez le code dans `src/lib/supabase.ts`
-   - Ajoutez vos variables d'environnement :
-     ```
-     NEXT_PUBLIC_SUPABASE_URL=https://votre-projet.supabase.co
-     NEXT_PUBLIC_SUPABASE_ANON_KEY=votre-cle-anon
-     ```
-
-4. **Mettre à jour le store**
-   - Remplacez les appels localStorage par des appels Supabase dans `src/lib/store.ts`
-
-## 📡 API pour Agents Externes
-
-L'API est documentée dans `/api/index.json` :
-
-```bash
-curl https://folly-os.vercel.app/api/index.json
+# API Keys (server-side only)
+PLANE_BASE_URL=https://plane.folly-os.dev
+PLANE_API_KEY=
+PLANE_WORKSPACE_SLUG=folly-os
+CALCOM_BASE_URL=https://cal.folly-os.dev
+CALCOM_API_KEY=
+DOCMOST_BASE_URL=https://notes.folly-os.dev
+DOCMOST_API_KEY=
+VAULTWARDEN_BASE_URL=https://vault.folly-os.dev
+VAULTWARDEN_ADMIN_TOKEN=
 ```
 
-### Endpoints
+## API Gateway
 
-| Endpoint | Méthode | Description |
-|----------|---------|-------------|
-| `/api/projects` | GET/POST | Projets |
-| `/api/tasks` | GET/POST | Tâches |
-| `/api/appointments` | GET/POST | Rendez-vous |
-| `/api/notes` | GET/POST | Notes |
-| `/api/passwords` | GET/POST | Passwords |
+Endpoints unifies pour agents IA :
 
-**Note**: Actuellement en mode client-side storage. Pour l'API backend, déployez avec Supabase.
+| Endpoint | Methode | Proxied vers | Description |
+|----------|---------|-------------|-------------|
+| `/api/projects` | GET, POST | Supabase | CRUD projets |
+| `/api/tasks` | GET, POST | Plane API | Work items |
+| `/api/calendar` | GET, POST | Cal.com API | Bookings & event types |
+| `/api/notes` | GET, POST | Docmost API | Spaces & pages |
+| `/api/vault` | GET | Vaultwarden API | Vault info |
+| `/api/health` | GET | Tous | Status de chaque service |
 
-## 📁 Structure du projet
+Authentification : Bearer token Supabase ou API key dans le header `Authorization`.
+
+## Structure du projet
 
 ```
-folly-os/
-├── src/
-│   ├── app/
-│   │   ├── page.tsx          # Dashboard principal
-│   │   ├── layout.tsx        # Root layout
-│   │   └── globals.css       # Styles globaux
-│   ├── components/
-│   │   ├── sidebar.tsx       # Sidebar avec projets
-│   │   ├── auth-form.tsx     # Formulaire auth
-│   │   ├── kanban-board.tsx  # Board Trello-like
-│   │   ├── calendar-view.tsx # Vue calendrier
-│   │   ├── notes-view.tsx    # Vue notes
-│   │   ├── passwords-view.tsx # Vue passwords
-│   │   └── ui/               # Composants shadcn/ui
-│   ├── lib/
-│   │   ├── store.ts          # Zustand store
-│   │   ├── supabase.ts       # Config Supabase
-│   │   └── utils.ts          # Utilitaires
-│   └── types/
-├── supabase/
-│   └── schema.sql            # Schéma DB
-├── public/
-│   └── api/
-│       └── index.json        # Doc API
-├── tailwind.config.ts
-├── next.config.js
-└── package.json
+src/
++-- app/
+|   +-- (dashboard)/
+|   |   +-- layout.tsx              # Sidebar + auth guard
+|   |   +-- projects/[id]/
+|   |       +-- page.tsx            # Vue d'ensemble
+|   |       +-- tasks/page.tsx      # Iframe Plane
+|   |       +-- calendar/page.tsx   # Iframe Cal.com
+|   |       +-- notes/page.tsx      # Iframe Docmost
+|   |       +-- passwords/page.tsx  # Iframe Vaultwarden
+|   +-- api/                        # API Gateway routes
++-- components/
+|   +-- layout/                     # Sidebar, header, toolbar
+|   +-- overview/                   # Stat cards, widgets
+|   +-- ui/                         # shadcn/ui
++-- lib/
+|   +-- api/                        # Clients API (Plane, Cal.com, Docmost, Vaultwarden)
+|   +-- supabase/                   # Supabase client/server
+|   +-- store.ts                    # Zustand store
++-- types/
+    +-- index.ts                    # Types centralises
 ```
 
-## 🎯 Roadmap
+## Documentation
 
-- [x] Auth basique
+- `docs/PRD.md` — Product Requirements Document
+- `docs/superpowers/plans/` — Plans d'implementation
+- `mockup-dashboard.html` — Mockup visuel (ouvrir dans un navigateur)
+- `CLAUDE.md` — Instructions pour agents IA
+- `supabase/schema.sql` — Schema base de donnees
+
+## Roadmap
+
+- [x] Auth Supabase
 - [x] CRUD Projets
-- [x] Kanban Tâches
-- [x] Calendrier RDV
-- [x] Éditeur Notes
-- [x] Vault Passwords
-- [ ] Intégration Supabase complète
-- [ ] Drag & drop Kanban
-- [ ] Recherche globale
-- [ ] Raccourcis clavier
-- [ ] Mode hors-ligne
-- [ ] API REST complète
+- [x] Design system Linear
+- [x] Iframes services externes
+- [ ] Vue d'ensemble par projet (widgets)
+- [ ] API Gateway complet
+- [ ] Deploiement Oracle Cloud (Coolify)
+- [ ] Mapping projets <-> services externes
+- [ ] Recherche globale (Cmd+K)
 
-## 📝 License
+## License
 
 MIT - Folly Germain AMOUZOUVI DOVO
-
-## 🤝 Contribution
-
-Les contributions sont les bienvenues ! N'hésitez pas à ouvrir une issue ou une PR.

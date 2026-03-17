@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Folly OS - Dashboard Mockup</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #0F1115;
+      --card: #161922;
+      --popover: #1F232E;
+      --primary: #5E6AD2;
+      --primary-hover: #6E7AE2;
+      --border: #2A2D37;
+      --text: #F7F8F8;
+      --text-secondary: #8A8F98;
+      --text-muted: #555A65;
+      --danger: #E5484D;
+      --success: #46A758;
+      --warning: #F5A623;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* === LAYOUT === */
+    .app {
+      display: flex;
+      height: 100vh;
+    }
+
+    /* === SIDEBAR === */
+    .sidebar {
+      width: 260px;
+      min-width: 260px;
+      background: var(--card);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .sidebar-header {
+      padding: 20px 16px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .sidebar-logo .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--primary);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .sidebar-logo span {
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    .sidebar-search {
+      width: 100%;
+      padding: 8px 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+    }
+
+    .sidebar-search::placeholder { color: var(--text-muted); }
+    .sidebar-search:focus { border-color: var(--primary); }
+
+    .sidebar-section {
+      padding: 12px 0;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .sidebar-section-title {
+      padding: 4px 16px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    .project-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 16px;
+      cursor: pointer;
+      transition: background 0.15s;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .project-item:hover { background: var(--popover); }
+    .project-item.active { background: var(--popover); color: var(--text); }
+
+    .project-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .project-item .project-count {
+      margin-left: auto;
+      font-size: 11px;
+      color: var(--text-muted);
+      background: var(--bg);
+      padding: 1px 6px;
+      border-radius: 10px;
+    }
+
+    .sidebar-footer {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .btn-new-project {
+      width: 100%;
+      padding: 8px;
+      background: transparent;
+      border: 1px dashed var(--border);
+      border-radius: 6px;
+      color: var(--text-secondary);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-new-project:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: rgba(94, 106, 210, 0.05);
+    }
+
+    /* === MAIN CONTENT === */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* === PROJECT HEADER === */
+    .project-header {
+      padding: 20px 28px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .project-title-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 4px;
+    }
+
+    .project-title-row h1 {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .status-badge {
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .status-active { background: rgba(70, 167, 88, 0.15); color: var(--success); }
+    .status-paused { background: rgba(245, 166, 35, 0.15); color: var(--warning); }
+
+    .project-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+    }
+
+    /* === TABS === */
+    .tabs {
+      display: flex;
+      gap: 0;
+    }
+
+    .tab {
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tab:hover { color: var(--text); }
+
+    .tab.active {
+      color: var(--text);
+      border-bottom-color: var(--primary);
+    }
+
+    .tab-icon {
+      font-size: 15px;
+    }
+
+    /* === TAB CONTENT === */
+    .tab-content {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .tab-pane {
+      display: none;
+      width: 100%;
+      height: 100%;
+    }
+
+    .tab-pane.active {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* === OVERVIEW PANE === */
+    .overview {
+      padding: 24px 28px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .overview-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 20px;
+    }
+
+    .stat-card .stat-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .stat-card .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .stat-card .stat-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .widget {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 16px;
+    }
+
+    .widget-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .widget-header .widget-action {
+      font-size: 12px;
+      color: var(--primary);
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .widget-body {
+      padding: 4px 0;
+    }
+
+    .widget-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 18px;
+      font-size: 13px;
+      border-bottom: 1px solid rgba(42, 45, 55, 0.5);
+    }
+
+    .widget-item:last-child { border-bottom: none; }
+
+    .widget-item .item-priority {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .widget-item .item-status {
+      margin-left: auto;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: var(--popover);
+      color: var(--text-secondary);
+    }
+
+    .widget-item .item-time {
+      margin-left: auto;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* === IFRAME PANES === */
+    .iframe-container {
+      flex: 1;
+      position: relative;
+    }
+
+    .iframe-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+      color: var(--text-secondary);
+      gap: 12px;
+    }
+
+    .iframe-placeholder .iframe-icon {
+      font-size: 48px;
+      opacity: 0.3;
+    }
+
+    .iframe-placeholder .iframe-label {
+      font-size: 15px;
+      font-weight: 500;
+    }
+
+    .iframe-placeholder .iframe-url {
+      font-size: 12px;
+      color: var(--text-muted);
+      background: var(--card);
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      font-family: monospace;
+    }
+
+    .iframe-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 28px;
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .iframe-toolbar .toolbar-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .toolbar-btn {
+      padding: 4px 10px;
+      background: var(--popover);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text-secondary);
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    .toolbar-btn:hover { border-color: var(--primary); color: var(--text); }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+    /* Quick nav items in sidebar */
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 16px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .nav-item:hover { background: var(--popover); color: var(--text); }
+    .nav-item .nav-icon { font-size: 15px; opacity: 0.6; }
+    .nav-item .nav-shortcut {
+      margin-left: auto;
+      font-size: 10px;
+      color: var(--text-muted);
+      background: var(--bg);
+      padding: 2px 5px;
+      border-radius: 3px;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <div class="logo-icon">F</div>
+        <span>Folly OS</span>
+      </div>
+      <input class="sidebar-search" placeholder="Rechercher... (Cmd+K)" />
+    </div>
+
+    <div style="padding: 12px 0 4px; border-bottom: 1px solid var(--border);">
+      <div class="nav-item">
+        <span class="nav-icon">&#9776;</span> Vue d'ensemble
+        <span class="nav-shortcut">&#8984;1</span>
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">&#9881;</span> Parametres
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Projets</div>
+
+      <div class="project-item active" onclick="selectProject(0)">
+        <div class="project-dot" style="background: #5E6AD2;"></div>
+        LexaNova
+        <span class="project-count">12</span>
+      </div>
+      <div class="project-item" onclick="selectProject(1)">
+        <div class="project-dot" style="background: #46A758;"></div>
+        Locaeo
+        <span class="project-count">8</span>
+      </div>
+      <div class="project-item" onclick="selectProject(2)">
+        <div class="project-dot" style="background: #E5484D;"></div>
+        DevisRGE
+        <span class="project-count">5</span>
+      </div>
+      <div class="project-item" onclick="selectProject(3)">
+        <div class="project-dot" style="background: #F5A623;"></div>
+        Folly Ops
+        <span class="project-count">3</span>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <button class="btn-new-project">+ Nouveau Projet</button>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <main class="main">
+    <!-- Project Header -->
+    <div class="project-header">
+      <div class="project-title-row">
+        <div class="project-dot" style="background: #5E6AD2; width: 12px; height: 12px;"></div>
+        <h1 id="project-name">LexaNova</h1>
+        <span class="status-badge status-active" id="project-status">Actif</span>
+      </div>
+      <p class="project-desc" id="project-desc">SaaS juridique - gestion documentaire intelligente</p>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('overview')">
+          <span class="tab-icon">&#9635;</span> Vue d'ensemble
+        </div>
+        <div class="tab" onclick="switchTab('tasks')">
+          <span class="tab-icon">&#9744;</span> Taches
+        </div>
+        <div class="tab" onclick="switchTab('calendar')">
+          <span class="tab-icon">&#128197;</span> Calendrier
+        </div>
+        <div class="tab" onclick="switchTab('notes')">
+          <span class="tab-icon">&#128221;</span> Notes
+        </div>
+        <div class="tab" onclick="switchTab('passwords')">
+          <span class="tab-icon">&#128274;</span> Passwords
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="tab-content">
+
+      <!-- === OVERVIEW === -->
+      <div class="tab-pane active" id="pane-overview">
+        <div class="overview">
+          <div class="overview-grid">
+            <div class="stat-card">
+              <div class="stat-label">Taches ouvertes</div>
+              <div class="stat-value">12</div>
+              <div class="stat-sub">3 urgentes</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">RDV cette semaine</div>
+              <div class="stat-value">4</div>
+              <div class="stat-sub">Prochain : demain 10h</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Notes</div>
+              <div class="stat-value">7</div>
+              <div class="stat-sub">2 modifiees aujourd'hui</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Mots de passe</div>
+              <div class="stat-value">5</div>
+              <div class="stat-sub">Tous securises</div>
+            </div>
+          </div>
+
+          <div class="widget">
+            <div class="widget-header">
+              Taches recentes
+              <span class="widget-action" onclick="switchTab('tasks')">Voir tout &rarr;</span>
+            </div>
+            <div class="widget-body">
+              <div class="widget-item">
+                <div class="item-priority" style="background: var(--danger);"></div>
+                Corriger l'auth OAuth
+                <span class="item-status" style="color: var(--danger);">Urgent</span>
+              </div>
+              <div class="widget-item">
+                <div class="item-priority" style="background: var(--warning);"></div>
+                Deployer la v2 API
+                <span class="item-status">En cours</span>
+              </div>
+              <div class="widget-item">
+                <div class="item-priority" style="background: var(--success);"></div>
+                Rediger specs module contrats
+                <span class="item-status">A faire</span>
+              </div>
+              <div class="widget-item">
+                <div class="item-priority" style="background: var(--text-muted);"></div>
+                Revue design page pricing
+                <span class="item-status">A faire</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="widget">
+              <div class="widget-header">
+                Prochains RDV
+                <span class="widget-action" onclick="switchTab('calendar')">Voir tout &rarr;</span>
+              </div>
+              <div class="widget-body">
+                <div class="widget-item">
+                  &#128197; Call client LexaNova
+                  <span class="item-time">Demain 10h</span>
+                </div>
+                <div class="widget-item">
+                  &#128197; Review sprint
+                  <span class="item-time">Mer 14h</span>
+                </div>
+                <div class="widget-item">
+                  &#128197; Demo investisseurs
+                  <span class="item-time">Ven 16h</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="widget">
+              <div class="widget-header">
+                Notes recentes
+                <span class="widget-action" onclick="switchTab('notes')">Voir tout &rarr;</span>
+              </div>
+              <div class="widget-body">
+                <div class="widget-item">
+                  &#128221; Architecture API v2
+                  <span class="item-time">Il y a 2h</span>
+                </div>
+                <div class="widget-item">
+                  &#128221; Specs module contrats
+                  <span class="item-time">Hier</span>
+                </div>
+                <div class="widget-item">
+                  &#128221; Notes reunion JM
+                  <span class="item-time">12 mars</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- === TASKS (iframe Plane) === -->
+      <div class="tab-pane" id="pane-tasks">
+        <div class="iframe-toolbar">
+          <span>&#9744; Plane &mdash; Taches du projet LexaNova</span>
+          <div class="toolbar-actions">
+            <button class="toolbar-btn">+ Nouvelle tache</button>
+            <button class="toolbar-btn">&#8634; Sync</button>
+            <button class="toolbar-btn">&#8599; Ouvrir Plane</button>
+          </div>
+        </div>
+        <div class="iframe-container">
+          <div class="iframe-placeholder">
+            <div class="iframe-icon">&#9744;</div>
+            <div class="iframe-label">Plane - Gestion des taches</div>
+            <div class="iframe-url">https://plane.folly-os.oracle-cloud/project/lexanova</div>
+            <div style="max-width: 520px; text-align: center; margin-top: 8px; font-size: 12px; color: var(--text-muted);">
+              Iframe Plane filtre sur le projet selectionne.<br>
+              Kanban, liste, timeline &mdash; toute la puissance de Plane.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- === CALENDAR (iframe Someday) === -->
+      <div class="tab-pane" id="pane-calendar">
+        <div class="iframe-toolbar">
+          <span>&#128197; Someday &mdash; Calendrier LexaNova</span>
+          <div class="toolbar-actions">
+            <button class="toolbar-btn">+ Nouveau RDV</button>
+            <button class="toolbar-btn">&#8634; Sync</button>
+            <button class="toolbar-btn">&#8599; Ouvrir Someday</button>
+          </div>
+        </div>
+        <div class="iframe-container">
+          <div class="iframe-placeholder">
+            <div class="iframe-icon">&#128197;</div>
+            <div class="iframe-label">Someday - Calendrier & RDV</div>
+            <div class="iframe-url">https://calendar.folly-os.oracle-cloud/project/lexanova</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- === NOTES (iframe Docmost) === -->
+      <div class="tab-pane" id="pane-notes">
+        <div class="iframe-toolbar">
+          <span>&#128221; Docmost &mdash; Notes LexaNova</span>
+          <div class="toolbar-actions">
+            <button class="toolbar-btn">+ Nouvelle note</button>
+            <button class="toolbar-btn">&#8634; Sync</button>
+            <button class="toolbar-btn">&#8599; Ouvrir Docmost</button>
+          </div>
+        </div>
+        <div class="iframe-container">
+          <div class="iframe-placeholder">
+            <div class="iframe-icon">&#128221;</div>
+            <div class="iframe-label">Docmost - Documentation & Notes</div>
+            <div class="iframe-url">https://notes.folly-os.oracle-cloud/project/lexanova</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- === PASSWORDS (iframe Padloc) === -->
+      <div class="tab-pane" id="pane-passwords">
+        <div class="iframe-toolbar">
+          <span>&#128274; Padloc &mdash; Coffre-fort LexaNova</span>
+          <div class="toolbar-actions">
+            <button class="toolbar-btn">+ Ajouter</button>
+            <button class="toolbar-btn">&#128272; Generer</button>
+            <button class="toolbar-btn">&#8599; Ouvrir Padloc</button>
+          </div>
+        </div>
+        <div class="iframe-container">
+          <div class="iframe-placeholder">
+            <div class="iframe-icon">&#128274;</div>
+            <div class="iframe-label">Padloc - Gestionnaire de mots de passe</div>
+            <div class="iframe-url">https://vault.folly-os.oracle-cloud/project/lexanova</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+  const projects = [
+    { name: 'LexaNova', desc: 'SaaS juridique - gestion documentaire intelligente', color: '#5E6AD2', status: 'Actif', statusClass: 'status-active', tasks: 12 },
+    { name: 'Locaeo', desc: 'Plateforme de location immobiliere', color: '#46A758', status: 'Actif', statusClass: 'status-active', tasks: 8 },
+    { name: 'DevisRGE', desc: 'Generateur de devis pour artisans RGE', color: '#E5484D', status: 'En pause', statusClass: 'status-paused', tasks: 5 },
+    { name: 'Folly Ops', desc: 'Infrastructure & outils internes', color: '#F5A623', status: 'Actif', statusClass: 'status-active', tasks: 3 },
+  ];
+
+  function selectProject(index) {
+    const p = projects[index];
+    document.getElementById('project-name').textContent = p.name;
+    document.getElementById('project-desc').textContent = p.desc;
+
+    const statusEl = document.getElementById('project-status');
+    statusEl.textContent = p.status;
+    statusEl.className = 'status-badge ' + p.statusClass;
+
+    // Update sidebar active
+    document.querySelectorAll('.project-item').forEach((el, i) => {
+      el.classList.toggle('active', i === index);
+    });
+
+    // Update title dot color
+    document.querySelector('.project-title-row .project-dot').style.background = p.color;
+
+    // Update iframe labels
+    document.querySelectorAll('.iframe-label').forEach(el => {
+      el.textContent = el.textContent; // keep as is
+    });
+
+    // Reset to overview
+    switchTab('overview');
+  }
+
+  function switchTab(tabId) {
+    // Update tab buttons
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    const tabs = ['overview', 'tasks', 'calendar', 'notes', 'passwords'];
+    const idx = tabs.indexOf(tabId);
+    if (idx >= 0) document.querySelectorAll('.tab')[idx].classList.add('active');
+
+    // Update panes
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    const pane = document.getElementById('pane-' + tabId);
+    if (pane) pane.classList.add('active');
+  }
+</script>
+
+</body>
+</html>
