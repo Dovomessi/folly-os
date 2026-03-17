@@ -4,7 +4,7 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
-import { CalendarDays, MessageSquare, CheckSquare } from 'lucide-react'
+import { CalendarDays, MessageSquare, CheckSquare, Repeat, Bell } from 'lucide-react'
 import type { Task } from '@/types'
 
 interface TaskCardProps {
@@ -87,10 +87,24 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
 
       {/* Footer: due date + meta */}
       <div className="flex items-center gap-3 ml-4 mt-1">
-        {task.due_date && (
+        {(task.due_date || task.next_due_at) && (
           <div className={`flex items-center gap-1 text-[11px] ${isOverdue ? 'text-[#E5484D]' : 'text-[#555A65]'}`}>
             <CalendarDays className="w-3 h-3" />
-            <span>{format(new Date(task.due_date), 'd MMM', { locale: fr })}</span>
+            <span>
+              {task.next_due_at
+                ? format(new Date(task.next_due_at), 'd MMM HH:mm', { locale: fr })
+                : format(new Date(task.due_date!), 'd MMM', { locale: fr })}
+            </span>
+          </div>
+        )}
+        {task.recurrence && (
+          <div className="flex items-center gap-1 text-[11px] text-[#5E6AD2]" title={`Récurrence: ${task.recurrence}`}>
+            <Repeat className="w-3 h-3" />
+          </div>
+        )}
+        {task.notify_before_minutes != null && (
+          <div className="flex items-center gap-1 text-[11px] text-[#F5A623]" title="Rappel Telegram activé">
+            <Bell className="w-3 h-3" />
           </div>
         )}
         {task.subtasks && task.subtasks.length > 0 && (

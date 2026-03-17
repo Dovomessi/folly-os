@@ -38,7 +38,10 @@ export function formatTaskNotification(task: {
   }
   const emoji = priorityEmoji[task.priority] || '📋'
   const due = task.next_due_at || task.due_date
-  const dueStr = due ? `\n📅 ${new Date(due).toLocaleDateString('fr-FR')}` : ''
+  const dueDate = due ? new Date(due) : null
+  const dueStr = dueDate
+    ? `\n📅 ${dueDate.toLocaleDateString('fr-FR')} à ${dueDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`
+    : ''
   const project = task.project_name ? `\n📁 ${task.project_name}` : ''
 
   return `${emoji} <b>Rappel tâche</b>\n\n${task.title}${dueStr}${project}`

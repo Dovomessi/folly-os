@@ -32,6 +32,7 @@ export function CreateTaskModal({ projectId, defaultColumnId, defaultStatus, onC
   const [status, setStatus] = useState(defaultStatus || 'todo')
   const [priority, setPriority] = useState('medium')
   const [dueDate, setDueDate] = useState('')
+  const [dueTime, setDueTime] = useState('')
   const [labels, setLabels] = useState('')
   const [description, setDescription] = useState('')
   const [recurrence, setRecurrence] = useState('')
@@ -39,10 +40,20 @@ export function CreateTaskModal({ projectId, defaultColumnId, defaultStatus, onC
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
+  const needsTime = recurrence || notifyBefore
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!title.trim()) {
       setError('Le titre est requis')
+      return
+    }
+    if (needsTime && dueDate && !dueTime) {
+      setError('L\'heure est requise pour les tâches récurrentes ou avec rappel')
+      return
+    }
+    if (needsTime && !dueDate) {
+      setError('La date est requise pour les tâches récurrentes ou avec rappel')
       return
     }
 
@@ -63,7 +74,7 @@ export function CreateTaskModal({ projectId, defaultColumnId, defaultStatus, onC
           column_id: defaultColumnId || null,
           project_id: projectId,
           recurrence: recurrence || null,
-          next_due_at: recurrence && dueDate ? new Date(dueDate).toISOString() : null,
+          next_due_at: dueDate && dueTime ? new Date(`${dueDate}T${dueTime}`).toISOString() : (dueDate ? new Date(`${dueDate}T09:00`).toISOString() : null),
           notify_before_minutes: notifyBefore ? parseInt(notifyBefore) : null,
           notify_channels: notifyBefore ? ['telegram'] : [],
         }),
@@ -143,14 +154,27 @@ export function CreateTaskModal({ projectId, defaultColumnId, defaultStatus, onC
             </div>
           </div>
 
-          {/* Due date + Labels */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Due date + time + Labels */}
+          <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="text-xs text-[#8A8F98] uppercase tracking-wider mb-1.5 block">Échéance</label>
+              <label className="text-xs text-[#8A8F98] uppercase tracking-wider mb-1.5 block">
+                Date {needsTime && <span className="text-[#E5484D]">*</span>}
+              </label>
               <input
                 type="date"
                 value={dueDate}
                 onChange={e => setDueDate(e.target.value)}
+                className="w-full bg-[#1F232E] border border-[#2A2D37] rounded-md px-3 py-2 text-sm text-[#F7F8F8] outline-none focus:border-[#5E6AD2] transition-colors"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-[#8A8F98] uppercase tracking-wider mb-1.5 block">
+                Heure {needsTime && <span className="text-[#E5484D]">*</span>}
+              </label>
+              <input
+                type="time"
+                value={dueTime}
+                onChange={e => setDueTime(e.target.value)}
                 className="w-full bg-[#1F232E] border border-[#2A2D37] rounded-md px-3 py-2 text-sm text-[#F7F8F8] outline-none focus:border-[#5E6AD2] transition-colors"
               />
             </div>
