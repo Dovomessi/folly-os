@@ -1,134 +1,72 @@
-# CLAUDE.md — Folly OS
+# CLAUDE.md — Folly OS v3
 
 ## Projet
 
-Folly OS est un dashboard de productivite unifie (style Linear) qui integre 4 outils open-source via iframes + API Gateway. Usage interne mono-utilisateur.
+Folly OS est un dashboard de productivite natif (style Linear) avec 4 modules integres : Taches/Kanban, Calendrier/RDV, Notes/Wiki, Coffre-fort Passwords. Inclut une page de booking public type Calendly. Usage interne mono-utilisateur.
 
 ## Stack
 
 - **Framework** : Next.js 14 (App Router), React 18, TypeScript
-- **Styling** : Tailwind CSS 3.4, shadcn/ui (Radix UI), design system dark Linear
-- **State** : Zustand avec persist (localStorage)
-- **Auth** : Supabase Auth
-- **DB meta** : Supabase PostgreSQL (projets, mappings)
-- **Deploiement dashboard** : Vercel
-- **Services backend** : Oracle Cloud ARM (Coolify) — Plane, Cal.com, Docmost, Vaultwarden
+- **Styling** : Tailwind CSS 3.4, shadcn/ui (Radix UI)
+- **State** : Zustand
+- **DB + Auth** : Supabase (PostgreSQL + Auth + RLS)
+- **Rich text** : Tiptap
+- **Drag & drop** : @dnd-kit
+- **Dates** : date-fns
+- **Email** : Resend
+- **Chiffrement** : AES-256-GCM (crypto Node.js)
+- **Deploiement** : Vercel (gratuit)
 
 ## Architecture
 
 ```
-Vercel (Dashboard Next.js + API Gateway)
-    |
-    ├── Supabase (Auth + projets + mappings)
-    |
-    └── Oracle Cloud (Coolify)
-        ├── Plane (taches) — plane.folly-os.dev
-        ├── Cal.com (calendrier) — cal.folly-os.dev
-        ├── Docmost (notes) — notes.folly-os.dev
-        ├── Vaultwarden (passwords) — vault.folly-os.dev
-        ├── PostgreSQL 16 (partage)
-        └── Redis 8
-```
-
-## Structure du code
-
-```
-src/
-├── app/
-│   ├── (auth)/login/page.tsx        # Page login
-│   ├── (dashboard)/
-│   │   ├── layout.tsx               # Layout avec sidebar + auth guard
-│   │   ├── page.tsx                 # Redirection vers projet
-│   │   └── projects/[id]/
-│   │       ├── page.tsx             # Vue d'ensemble projet
-│   │       ├── tasks/page.tsx       # Iframe Plane
-│   │       ├── calendar/page.tsx    # Iframe Cal.com
-│   │       ├── notes/page.tsx       # Iframe Docmost
-│   │       └── passwords/page.tsx   # Iframe Vaultwarden
-│   ├── api/
-│   │   ├── projects/route.ts       # CRUD projets (Supabase)
-│   │   ├── tasks/route.ts          # Proxy Plane API
-│   │   ├── calendar/route.ts       # Proxy Cal.com API
-│   │   ├── notes/route.ts          # Proxy Docmost API
-│   │   ├── vault/route.ts          # Proxy Vaultwarden API
-│   │   └── health/route.ts         # Health check tous services
-│   └── globals.css
-├── components/
-│   ├── layout/
-│   │   ├── sidebar.tsx              # Sidebar projets
-│   │   ├── project-header.tsx       # Header avec nom + statut + onglets
-│   │   └── iframe-toolbar.tsx       # Toolbar au-dessus des iframes
-│   ├── overview/
-│   │   ├── stat-card.tsx            # Carte statistique
-│   │   ├── widget.tsx               # Widget liste (taches, rdv, notes)
-│   │   └── overview-grid.tsx        # Grille vue d'ensemble
-│   ├── iframe-view.tsx              # Composant iframe reutilisable
-│   └── ui/                          # shadcn/ui (ne pas modifier)
-├── lib/
-│   ├── supabase/
-│   │   ├── client.ts
-│   │   ├── server.ts
-│   │   └── middleware.ts
-│   ├── api/
-│   │   ├── plane.ts                 # Client Plane API
-│   │   ├── calcom.ts                # Client Cal.com API
-│   │   ├── docmost.ts               # Client Docmost API
-│   │   └── vaultwarden.ts           # Client Vaultwarden API
-│   ├── store.ts                     # Zustand store (projets)
-│   └── utils.ts
-├── types/
-│   └── index.ts                     # Types centralises
-└── middleware.ts                     # Auth middleware
+Vercel (Next.js)
+├── Pages privees (auth Supabase)
+│   ├── /projects — sidebar + projets
+│   ├── /projects/[id] — dashboard vue d'ensemble
+│   ├── /projects/[id]/tasks — kanban + liste
+│   ├── /projects/[id]/calendar — mois/semaine/jour
+│   ├── /projects/[id]/notes — wiki avec Tiptap
+│   ├── /projects/[id]/vault — coffre-fort passwords
+│   └── /settings — config booking + dispos
+├── Page publique (sans auth)
+│   └── /book/[slug] — booking clients
+└── API Gateway
+    └── /api/* — CRUD pour agents IA
 ```
 
 ## Conventions
 
 - **Langue UI** : francais
-- **Langue code** : anglais (variables, fonctions, commentaires)
-- **Design tokens** : utiliser les variables CSS du design system Linear (voir PRD.md)
-- **Composants** : shadcn/ui pour tous les composants UI de base
-- **API routes** : Next.js Route Handlers (app/api/), pas de pages API
-- **Pas de console.log** en production, utiliser des erreurs explicites
+- **Langue code** : anglais (variables, fonctions)
+- **Design tokens** : voir PRD.md section Design System
+- **Composants** : shadcn/ui pour UI de base, composants custom pour les modules
+- **API routes** : Next.js Route Handlers (app/api/)
 - **Imports** : alias `@/` pour `src/`
+- **Pas de console.log** en production
+- **Sauvegarde auto** : debounce 1s pour les notes
 
 ## Commandes
 
 ```bash
-npm run dev      # Dev server (localhost:3000)
+npm run dev      # Dev server
 npm run build    # Build production
 npm run start    # Start production
 ```
 
-## Variables d'environnement
-
-Fichier `.env.local` (ne jamais commiter) :
-
-```
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
-PLANE_BASE_URL=
-PLANE_API_KEY=
-CALCOM_BASE_URL=
-CALCOM_API_KEY=
-DOCMOST_BASE_URL=
-DOCMOST_API_KEY=
-VAULTWARDEN_BASE_URL=
-VAULTWARDEN_ADMIN_TOKEN=
-```
-
 ## Documents de reference
 
-- `docs/PRD.md` — Product Requirements Document complet
+- `docs/PRD.md` — PRD complet avec schema DB, features, architecture
 - `docs/superpowers/plans/` — Plans d'implementation
-- `mockup-dashboard.html` — Mockup visuel de reference (ouvrir dans un navigateur)
-- `supabase/schema.sql` — Schema base de donnees
+- `mockup-dashboard.html` — Mockup visuel de reference
 
 ## Regles pour les agents
 
 - Toujours lire le PRD avant de commencer une tache
-- Toujours verifier le mockup HTML pour le rendu visuel attendu
-- Utiliser les API des services (Plane, Cal.com, Docmost, Vaultwarden) via les clients dans `lib/api/`
-- Ne jamais hardcoder les URLs des services — utiliser les variables d'env
-- Les iframes doivent etre dynamiques : l'URL change selon le projet selectionne
-- L'API Gateway doit authentifier via Supabase token ou API key
+- Les mots de passe doivent etre chiffres AES-256-GCM avant stockage
+- Les routes /book/* sont publiques, tout le reste est protege par auth
+- L'API Gateway doit authentifier via Supabase token (sauf routes booking)
+- Utiliser Supabase RLS : chaque user ne voit que ses propres donnees
+- Les emails de booking sont envoyes via Resend
+- Le drag & drop utilise @dnd-kit, pas react-beautiful-dnd
+- L'editeur de notes utilise Tiptap, pas Slate ou Draft.js
