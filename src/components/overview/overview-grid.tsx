@@ -10,6 +10,7 @@ interface OverviewGridProps {
   upcomingEvents: WidgetItem[]
   recentNotes: WidgetItem[]
   onNavigate: (tab: string) => void
+  loading?: boolean
 }
 
 export function OverviewGrid({
@@ -18,12 +19,13 @@ export function OverviewGrid({
   upcomingEvents,
   recentNotes,
   onNavigate,
+  loading,
 }: OverviewGridProps) {
   return (
-    <div className="p-7 overflow-y-auto flex-1">
+    <div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
         {stats.map((s, i) => (
-          <StatCard key={i} label={s.label} value={s.value} sub={s.sub} />
+          <StatCard key={i} label={s.label} value={loading ? '—' : s.value} sub={s.sub} />
         ))}
       </div>
 
@@ -39,7 +41,7 @@ export function OverviewGrid({
                 ? 'text-[#E5484D]'
                 : 'text-[#8A8F98]'
             }`}>
-              {item.status || item.meta}
+              {item.status || item.meta || item.subtitle}
             </span>
           )}
         />

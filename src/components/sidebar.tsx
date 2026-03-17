@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useStore } from '@/lib/store'
 import type { Project } from '@/types'
@@ -27,8 +27,35 @@ export function Sidebar({ onLogout, userEmail }: SidebarProps) {
   const [newProjectName, setNewProjectName] = useState('')
   const [newProjectDescription, setNewProjectDescription] = useState('')
   const [selectedColor, setSelectedColor] = useState(PROJECT_COLORS[0])
+  const [taskCounts, setTaskCounts] = useState<Record<string, number>>({})
 
   const selectedProjectId = pathname.match(/\/projects\/([^/]+)/)?.[1] || null
+
+  useEffect(() => {
+    if (projects.length === 0) return
+
+    async function fetchTaskCounts() {
+      const counts: Record<string, number> = {}
+      await Promise.all(
+        projects.map(async (project) => {
+          try {
+            const res = await fetch(`/api/tasks?project_id=${project.id}`)
+            if (!res.ok) return
+            const json = await res.json()
+            const openTasks = (json.data || []).filter(
+              (t: { status: string }) => t.status !== 'done'
+            )
+            counts[project.id] = openTasks.length
+          } catch {
+            counts[project.id] = 0
+          }
+        })
+      )
+      setTaskCounts(counts)
+    }
+
+    fetchTaskCounts()
+  }, [projects])
 
   const handleSelectProject = (id: string) => {
     router.push(`/projects/${id}`)
@@ -141,7 +168,7 @@ export function Sidebar({ onLogout, userEmail }: SidebarProps) {
               />
               <span className="flex-1 truncate">{project.name}</span>
               <span className="text-[11px] text-[#555A65] bg-[#0F1115] px-1.5 py-0.5 rounded-full">
-                0
+                {taskCounts[project.id] ?? 0}
               </span>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
