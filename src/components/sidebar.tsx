@@ -106,7 +106,10 @@ export function Sidebar({ onLogout, userEmail }: SidebarProps) {
           <LayoutGrid className="w-4 h-4 opacity-60" />
           Vue d&apos;ensemble
         </button>
-        <button className="flex items-center gap-2.5 w-full px-4 py-[7px] text-[13px] text-[#8A8F98] hover:bg-[#1F232E] hover:text-[#F7F8F8] transition-colors">
+        <button
+          onClick={() => router.push('/settings')}
+          className={`flex items-center gap-2.5 w-full px-4 py-[7px] text-[13px] hover:bg-[#1F232E] hover:text-[#F7F8F8] transition-colors ${pathname.startsWith('/settings') ? 'bg-[#1F232E] text-[#F7F8F8]' : 'text-[#8A8F98]'}`}
+        >
           <Settings className="w-4 h-4 opacity-60" />
           Parametres
         </button>
