@@ -18,7 +18,7 @@ interface ApiKey {
   key_prefix: string
   created_at: string
   last_used_at: string | null
-  revoked: boolean
+  revoked_at: string | null
 }
 
 export default function ApiKeysPage() {
@@ -62,11 +62,12 @@ export default function ApiKeysPage() {
     })
     if (res.ok) {
       const { data } = await res.json()
-      setApiKeys(prev => [...prev, data.apiKey])
-      setRawKey(data.rawKey)
+      const { key, ...apiKey } = data
+      setRawKey(key)
       setIsCreateOpen(false)
       setNewKeyName('')
       setIsRevealOpen(true)
+      fetchKeys()
     }
     setCreating(false)
   }
@@ -84,11 +85,13 @@ export default function ApiKeysPage() {
 
   async function handleRevoke() {
     if (!revokingId) return
-    const res = await fetch(`/api/settings/api-keys/${revokingId}`, { method: 'DELETE' })
+    const res = await fetch('/api/settings/api-keys', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: revokingId }),
+    })
     if (res.ok) {
-      setApiKeys(prev =>
-        prev.map(k => k.id === revokingId ? { ...k, revoked: true } : k)
-      )
+      fetchKeys()
     }
     setIsRevokeOpen(false)
     setRevokingId(null)
@@ -162,14 +165,14 @@ export default function ApiKeysPage() {
                 <div
                   key={key.id}
                   className={`bg-[#161922] border border-[#2A2D37] rounded-lg p-4 flex items-center gap-4 ${
-                    key.revoked ? 'opacity-50' : ''
+                    key.revoked_at ? 'opacity-50' : ''
                   }`}
                 >
                   <Key className="w-4 h-4 text-[#555A65] flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-[#F7F8F8] font-medium text-sm">{key.name}</span>
-                      {key.revoked ? (
+                      {key.revoked_at ? (
                         <Badge
                           variant="outline"
                           className="text-[10px] py-0 h-4 border-red-500/40 text-red-400"
@@ -195,7 +198,7 @@ export default function ApiKeysPage() {
                       </span>
                     </div>
                   </div>
-                  {!key.revoked && (
+                  {!key.revoked_at && (
                     <button
                       onClick={() => openRevokeDialog(key.id)}
                       className="p-1.5 text-[#555A65] hover:text-red-400 hover:bg-[#1F232E] rounded transition-colors"
