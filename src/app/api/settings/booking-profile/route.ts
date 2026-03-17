@@ -7,7 +7,7 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { data, error } = await supabase
-    .from('booking_profiles')
+    .from('booking_profile')
     .select('*')
     .eq('user_id', user.id)
     .single()
@@ -27,7 +27,7 @@ export async function PUT(request: NextRequest) {
 
   // Upsert
   const { data, error } = await supabase
-    .from('booking_profiles')
+    .from('booking_profile')
     .upsert({
       display_name: body.display_name,
       slug: body.slug,

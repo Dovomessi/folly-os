@@ -40,7 +40,7 @@ export function Widget({ title, actionLabel, onAction, items, renderMeta }: Widg
               )}
               <span className="text-[#F7F8F8] flex-1">{item.title}</span>
               {renderMeta ? renderMeta(item) : (
-                <span className="text-xs text-[#555A65]">{item.meta}</span>
+                <span className="text-xs text-[#555A65]">{item.meta || item.subtitle}</span>
               )}
             </div>
           ))

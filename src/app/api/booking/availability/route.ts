@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
 
   // Find booking profile by slug
   const { data: profile, error: profileError } = await supabase
-    .from('booking_profiles')
+    .from('booking_profile')
     .select('*')
     .eq('slug', slug)
     .single()

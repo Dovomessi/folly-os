@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useStore } from '@/lib/store'
 import type { Project } from '@/types'
@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
-import { PROJECT_COLORS, generateId } from '@/lib/utils'
+import { PROJECT_COLORS } from '@/lib/utils'
 import { Plus, MoreVertical, Trash2, Edit2, LogOut, LayoutGrid, Settings } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 
@@ -18,7 +18,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ onLogout, userEmail }: SidebarProps) {
-  const { projects, addProject, updateProject, deleteProject } = useStore()
+  const { projects, setProjects, addProject, updateProject, deleteProject } = useStore()
   const router = useRouter()
   const pathname = usePathname()
   const [isCreateOpen, setIsCreateOpen] = useState(false)
@@ -28,9 +28,27 @@ export function Sidebar({ onLogout, userEmail }: SidebarProps) {
   const [newProjectDescription, setNewProjectDescription] = useState('')
   const [selectedColor, setSelectedColor] = useState(PROJECT_COLORS[0])
   const [taskCounts, setTaskCounts] = useState<Record<string, number>>({})
+  const [loading, setLoading] = useState(false)
 
   const selectedProjectId = pathname.match(/\/projects\/([^/]+)/)?.[1] || null
 
+  // Load projects from Supabase on mount
+  const fetchProjects = useCallback(async () => {
+    try {
+      const res = await fetch('/api/projects')
+      if (!res.ok) return
+      const { data } = await res.json()
+      if (data) setProjects(data)
+    } catch {
+      // silently fail
+    }
+  }, [setProjects])
+
+  useEffect(() => {
+    fetchProjects()
+  }, [fetchProjects])
+
+  // Fetch task counts
   useEffect(() => {
     if (projects.length === 0) return
 
@@ -61,34 +79,58 @@ export function Sidebar({ onLogout, userEmail }: SidebarProps) {
     router.push(`/projects/${id}`)
   }
 
-  const handleCreateProject = () => {
-    if (!newProjectName.trim()) return
-    const newProject: Project = {
-      id: generateId(),
-      name: newProjectName,
-      description: newProjectDescription || null,
-      color: selectedColor,
-      status: 'active',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+  const handleCreateProject = async () => {
+    if (!newProjectName.trim() || loading) return
+    setLoading(true)
+    try {
+      const res = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newProjectName,
+          description: newProjectDescription || null,
+          color: selectedColor,
+          status: 'active',
+        }),
+      })
+      if (!res.ok) throw new Error('Failed to create project')
+      const { data } = await res.json()
+      addProject(data)
+      setNewProjectName('')
+      setNewProjectDescription('')
+      setSelectedColor(PROJECT_COLORS[0])
+      setIsCreateOpen(false)
+      router.push(`/projects/${data.id}`)
+    } catch {
+      alert('Erreur lors de la creation du projet')
+    } finally {
+      setLoading(false)
     }
-    addProject(newProject)
-    setNewProjectName('')
-    setNewProjectDescription('')
-    setSelectedColor(PROJECT_COLORS[0])
-    setIsCreateOpen(false)
-    router.push(`/projects/${newProject.id}`)
   }
 
-  const handleEditProject = () => {
-    if (!editingProject || !newProjectName.trim()) return
-    updateProject(editingProject.id, {
-      name: newProjectName,
-      description: newProjectDescription || null,
-      color: selectedColor,
-    })
-    setIsEditOpen(false)
-    setEditingProject(null)
+  const handleEditProject = async () => {
+    if (!editingProject || !newProjectName.trim() || loading) return
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/projects/${editingProject.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newProjectName,
+          description: newProjectDescription || null,
+          color: selectedColor,
+        }),
+      })
+      if (!res.ok) throw new Error('Failed to update project')
+      const { data } = await res.json()
+      updateProject(editingProject.id, data)
+      setIsEditOpen(false)
+      setEditingProject(null)
+    } catch {
+      alert('Erreur lors de la modification du projet')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const openEditDialog = (project: Project) => {
@@ -99,10 +141,15 @@ export function Sidebar({ onLogout, userEmail }: SidebarProps) {
     setIsEditOpen(true)
   }
 
-  const handleDeleteProject = (projectId: string) => {
-    if (confirm('Supprimer ce projet ?')) {
+  const handleDeleteProject = async (projectId: string) => {
+    if (!confirm('Supprimer ce projet ?')) return
+    try {
+      const res = await fetch(`/api/projects/${projectId}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Failed to delete project')
       deleteProject(projectId)
       if (selectedProjectId === projectId) router.push('/projects')
+    } catch {
+      alert('Erreur lors de la suppression du projet')
     }
   }
 
@@ -265,7 +312,9 @@ export function Sidebar({ onLogout, userEmail }: SidebarProps) {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsCreateOpen(false)} className="border-[#2A2D37] text-[#F7F8F8] hover:bg-[#1F232E]">Annuler</Button>
-            <Button onClick={handleCreateProject} className="bg-[#5E6AD2] hover:bg-[#4F5BC7] text-white">Creer</Button>
+            <Button onClick={handleCreateProject} disabled={loading} className="bg-[#5E6AD2] hover:bg-[#4F5BC7] text-white">
+              {loading ? 'Creation...' : 'Creer'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -296,7 +345,9 @@ export function Sidebar({ onLogout, userEmail }: SidebarProps) {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEditOpen(false)} className="border-[#2A2D37] text-[#F7F8F8] hover:bg-[#1F232E]">Annuler</Button>
-            <Button onClick={handleEditProject} className="bg-[#5E6AD2] hover:bg-[#4F5BC7] text-white">Enregistrer</Button>
+            <Button onClick={handleEditProject} disabled={loading} className="bg-[#5E6AD2] hover:bg-[#4F5BC7] text-white">
+              {loading ? 'Enregistrement...' : 'Enregistrer'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
