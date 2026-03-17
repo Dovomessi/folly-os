@@ -40,6 +40,14 @@ export interface Task {
   user_id: string
   subtasks?: Subtask[]
   comments?: TaskComment[]
+  // Recurrence
+  recurrence?: 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly' | null
+  recurrence_end_date?: string | null
+  next_due_at?: string | null
+  // Notifications
+  notify_before_minutes?: number | null
+  notify_channels?: string[]
+  last_notified_at?: string | null
 }
 
 export interface Subtask {

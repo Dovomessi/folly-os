@@ -55,6 +55,11 @@ export async function POST(request: NextRequest) {
       labels: body.labels || [],
       project_id: body.project_id,
       user_id: userId,
+      recurrence: body.recurrence || null,
+      recurrence_end_date: body.recurrence_end_date || null,
+      next_due_at: body.next_due_at || null,
+      notify_before_minutes: body.notify_before_minutes ?? null,
+      notify_channels: body.notify_channels || [],
     })
     .select()
     .single()

@@ -1,5 +1,11 @@
 {
   "version": 2,
   "name": "folly-os",
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "crons": [
+    {
+      "path": "/api/cron/recurring-tasks",
+      "schedule": "0 * * * *"
+    }
+  ]
 }

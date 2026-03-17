@@ -34,6 +34,8 @@ export function CreateTaskModal({ projectId, defaultColumnId, defaultStatus, onC
   const [dueDate, setDueDate] = useState('')
   const [labels, setLabels] = useState('')
   const [description, setDescription] = useState('')
+  const [recurrence, setRecurrence] = useState('')
+  const [notifyBefore, setNotifyBefore] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
@@ -60,6 +62,10 @@ export function CreateTaskModal({ projectId, defaultColumnId, defaultStatus, onC
           labels: labels.split(',').map(l => l.trim()).filter(Boolean),
           column_id: defaultColumnId || null,
           project_id: projectId,
+          recurrence: recurrence || null,
+          next_due_at: recurrence && dueDate ? new Date(dueDate).toISOString() : null,
+          notify_before_minutes: notifyBefore ? parseInt(notifyBefore) : null,
+          notify_channels: notifyBefore ? ['telegram'] : [],
         }),
       })
 
@@ -157,6 +163,42 @@ export function CreateTaskModal({ projectId, defaultColumnId, defaultStatus, onC
                 placeholder="tag1, tag2"
                 className="w-full bg-[#1F232E] border border-[#2A2D37] rounded-md px-3 py-2 text-sm text-[#F7F8F8] placeholder-[#555A65] outline-none focus:border-[#5E6AD2] transition-colors"
               />
+            </div>
+          </div>
+
+          {/* Recurrence + Notification */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-[#8A8F98] uppercase tracking-wider mb-1.5 block">Récurrence</label>
+              <select
+                value={recurrence}
+                onChange={e => setRecurrence(e.target.value)}
+                className="w-full bg-[#1F232E] border border-[#2A2D37] rounded-md px-3 py-2 text-sm text-[#F7F8F8] outline-none focus:border-[#5E6AD2] transition-colors"
+              >
+                <option value="">Aucune</option>
+                <option value="daily">Quotidienne</option>
+                <option value="weekly">Hebdomadaire</option>
+                <option value="biweekly">Bi-hebdomadaire</option>
+                <option value="monthly">Mensuelle</option>
+                <option value="quarterly">Trimestrielle</option>
+                <option value="yearly">Annuelle</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs text-[#8A8F98] uppercase tracking-wider mb-1.5 block">Rappel Telegram</label>
+              <select
+                value={notifyBefore}
+                onChange={e => setNotifyBefore(e.target.value)}
+                className="w-full bg-[#1F232E] border border-[#2A2D37] rounded-md px-3 py-2 text-sm text-[#F7F8F8] outline-none focus:border-[#5E6AD2] transition-colors"
+              >
+                <option value="">Aucun</option>
+                <option value="0">Au moment</option>
+                <option value="15">15 min avant</option>
+                <option value="30">30 min avant</option>
+                <option value="60">1h avant</option>
+                <option value="120">2h avant</option>
+                <option value="1440">1 jour avant</option>
+              </select>
             </div>
           </div>
 
