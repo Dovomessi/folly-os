@@ -191,6 +191,13 @@ export default function AvailabilityPage() {
           </button>
           <span className="text-[#2A2D37]">/</span>
           <span className="text-[#F7F8F8] text-sm font-medium">Disponibilités</span>
+          <span className="text-[#2A2D37]">/</span>
+          <button
+            onClick={() => router.push('/settings/api-keys')}
+            className="text-[#8A8F98] hover:text-[#F7F8F8] text-sm transition-colors"
+          >
+            Clés API
+          </button>
         </div>
         <h1 className="text-xl font-semibold text-[#F7F8F8] mt-1">Horaires & Disponibilités</h1>
       </div>

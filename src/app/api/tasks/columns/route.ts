@@ -46,6 +46,15 @@ export async function GET(request: NextRequest) {
     data = created
   }
 
+  // Ensure status is populated for legacy columns that may have NULL status
+  if (data && data.length > 0) {
+    const statusMap = ['todo', 'in_progress', 'in_review', 'done']
+    data = data.map((col: any, i: number) => ({
+      ...col,
+      status: col.status || statusMap[i] || 'todo'
+    }))
+  }
+
   return NextResponse.json({ data })
 }
 

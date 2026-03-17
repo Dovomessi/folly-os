@@ -35,7 +35,7 @@ export default function TasksPage() {
     : undefined
 
   const [view, setView] = useState<TaskView>('kanban')
-  const [columns, setColumns] = useState<(TaskColumn & { status?: string })[]>([])
+  const [columns, setColumns] = useState<TaskColumn[]>([])
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -119,11 +119,11 @@ export default function TasksPage() {
     setTasks(prev => [...prev, task])
   }, [])
 
-  const handleAddTaskFromColumn = useCallback((column: TaskColumn & { status?: string }) => {
+  const handleAddTaskFromColumn = useCallback((column: TaskColumn) => {
     setCreateModal({
       open: true,
       columnId: column.id,
-      status: (column as any).status || 'todo',
+      status: column.status || 'todo',
     })
   }, [])
 

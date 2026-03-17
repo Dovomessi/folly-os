@@ -18,10 +18,10 @@ import { KanbanColumn } from './kanban-column'
 import { TaskCard } from './task-card'
 
 interface KanbanBoardProps {
-  columns: (TaskColumn & { status?: string })[]
+  columns: TaskColumn[]
   tasks: Task[]
   onTaskClick: (task: Task) => void
-  onAddTask: (column: TaskColumn & { status?: string }) => void
+  onAddTask: (column: TaskColumn) => void
   onTasksChange: (tasks: Task[]) => void
 }
 
@@ -69,7 +69,7 @@ export function KanbanBoard({ columns, tasks, onTaskClick, onAddTask, onTasksCha
 
     // Find the target column's status
     const targetColumn = columns.find(c => c.id === targetColumnId)
-    const newStatus = (targetColumn as any)?.status as Task['status'] | undefined
+    const newStatus = targetColumn?.status as Task['status'] | undefined
 
     onTasksChange(
       tasks.map(t =>
@@ -98,7 +98,7 @@ export function KanbanBoard({ columns, tasks, onTaskClick, onAddTask, onTasksCha
     if (!activeTask) return
 
     const targetColumn = columns.find(c => c.id === targetColumnId)
-    const newStatus = (targetColumn as any)?.status as Task['status'] | undefined
+    const newStatus = targetColumn?.status as Task['status'] | undefined
 
     // Reorder within same column or move to new column
     const columnTasks = tasks

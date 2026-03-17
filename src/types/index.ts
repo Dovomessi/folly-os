@@ -19,6 +19,7 @@ export interface TaskColumn {
   id: string
   name: string
   position: number
+  status?: string
   project_id: string
   user_id: string
 }

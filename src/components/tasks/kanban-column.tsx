@@ -7,10 +7,10 @@ import type { Task, TaskColumn } from '@/types'
 import { TaskCard } from './task-card'
 
 interface KanbanColumnProps {
-  column: TaskColumn & { status?: string }
+  column: TaskColumn
   tasks: Task[]
   onTaskClick: (task: Task) => void
-  onAddTask: (column: TaskColumn & { status?: string }) => void
+  onAddTask: (column: TaskColumn) => void
 }
 
 const COLUMN_COLORS: Record<string, string> = {
@@ -23,7 +23,7 @@ const COLUMN_COLORS: Record<string, string> = {
 export function KanbanColumn({ column, tasks, onTaskClick, onAddTask }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: column.id })
 
-  const statusKey = (column as any).status || ''
+  const statusKey = column.status || ''
   const headerColor = COLUMN_COLORS[statusKey] ?? '#8A8F98'
 
   return (
