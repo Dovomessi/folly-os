@@ -9,6 +9,19 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
+  // Health check is public
+  if (pathname === '/api/health') {
+    return NextResponse.next()
+  }
+
+  // API routes with Bearer token: let the route handler verify the key
+  if (pathname.startsWith('/api/')) {
+    const authHeader = request.headers.get('authorization')
+    if (authHeader?.startsWith('Bearer fos_')) {
+      return NextResponse.next()
+    }
+  }
+
   return await updateSession(request)
 }
 

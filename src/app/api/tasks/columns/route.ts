@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { getAuthenticatedUser } from '@/lib/api-utils'
 
 const DEFAULT_COLUMNS = [
   { name: 'A faire', position: 0, status: 'todo' },
@@ -9,9 +9,9 @@ const DEFAULT_COLUMNS = [
 ]
 
 export async function GET(request: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const auth = await getAuthenticatedUser(request)
+  if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { userId, supabase } = auth
 
   const { searchParams } = new URL(request.url)
   const projectId = searchParams.get('project_id')
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     .from('task_columns')
     .select('*')
     .eq('project_id', projectId)
-    .eq('user_id', user.id)
+    .eq('user_id', userId)
     .order('position', { ascending: true })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     const toInsert = DEFAULT_COLUMNS.map(col => ({
       ...col,
       project_id: projectId,
-      user_id: user.id,
+      user_id: userId,
     }))
 
     const { data: created, error: createError } = await supabase
@@ -50,15 +50,15 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const auth = await getAuthenticatedUser(request)
+  if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { userId, supabase } = auth
 
   const body = await request.json()
 
   const { data, error } = await supabase
     .from('task_columns')
-    .insert({ ...body, user_id: user.id })
+    .insert({ ...body, user_id: userId })
     .select()
     .single()
 

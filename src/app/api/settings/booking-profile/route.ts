@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { getAuthenticatedUser } from '@/lib/api-utils'
 
-export async function GET() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+export async function GET(request: NextRequest) {
+  const auth = await getAuthenticatedUser(request)
+  if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { userId, supabase } = auth
 
   const { data, error } = await supabase
     .from('booking_profile')
     .select('*')
-    .eq('user_id', user.id)
+    .eq('user_id', userId)
     .single()
 
   if (error && error.code !== 'PGRST116') {
@@ -19,9 +19,9 @@ export async function GET() {
 }
 
 export async function PUT(request: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const auth = await getAuthenticatedUser(request)
+  if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { userId, supabase } = auth
 
   const body = await request.json()
 
@@ -33,7 +33,7 @@ export async function PUT(request: NextRequest) {
       slug: body.slug,
       bio: body.bio || null,
       timezone: body.timezone || 'Europe/Paris',
-      user_id: user.id,
+      user_id: userId,
     }, { onConflict: 'user_id' })
     .select()
     .single()

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { getAuthenticatedUser } from '@/lib/api-utils'
 
 export async function GET(request: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const auth = await getAuthenticatedUser(request)
+  if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { userId, supabase } = auth
 
   const { searchParams } = new URL(request.url)
   const projectId = searchParams.get('project_id')
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     .from('tasks')
     .select('*')
     .eq('project_id', projectId)
-    .eq('user_id', user.id)
+    .eq('user_id', userId)
     .order('position', { ascending: true })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -25,9 +25,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const auth = await getAuthenticatedUser(request)
+  if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { userId, supabase } = auth
 
   const body = await request.json()
 
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     .from('tasks')
     .select('position')
     .eq('project_id', body.project_id)
-    .eq('user_id', user.id)
+    .eq('user_id', userId)
     .order('position', { ascending: false })
     .limit(1)
 
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
       due_date: body.due_date || null,
       labels: body.labels || [],
       project_id: body.project_id,
-      user_id: user.id,
+      user_id: userId,
     })
     .select()
     .single()
